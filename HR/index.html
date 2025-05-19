@@ -439,7 +439,7 @@
       // Load notifications from API
       async function loadNotifications() {
         try {
-          const response = await fetch('http://localhost:3000/api/notifications');
+          const response = await fetch('http://98.80.67.100:3013/api/notifications');
           
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -541,7 +541,7 @@
         const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         
         try {
-          const response = await fetch('http://localhost:3000/api/notifications', {
+          const response = await fetch('http://98.80.67.100:3013/api/notifications', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
