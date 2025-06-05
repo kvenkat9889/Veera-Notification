@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: veera_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: notifications
+    ports:
+      - "5443:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - veera_net
+
+  backend:
+    build: ./Backend
+    container_name: veera_backend
+    ports:
+      - "3013:3013"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - veera_net
+
+  frontend:
+    build: ./Frontend
+    container_name: veera_frontend
+    ports:
+      - "9021:80"
+    networks:
+      - veera_net
+
+  hr:
+    build: ./HR
+    container_name: veera_hr
+    ports:
+      - "9022:80"
+    networks:
+      - veera_net
+
+volumes:
+  pgdata:
+
+networks:
+  veera_net:
+

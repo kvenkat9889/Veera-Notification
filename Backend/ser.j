@@ -5,57 +5,46 @@ const app = express();
 const port = 3013;
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors()); // Enable CORS for frontend requests
+app.use(express.json()); // Parse JSON bodies
 
 // PostgreSQL connection configuration
 const pool = new Pool({
-  user: 'postgres',
-  host: 'postgres', // matches the Docker Compose service name
+  user: 'postgres', // Replace with your PostgreSQL username
+  host: 'postgres',
   database: 'notifications',
-  password: 'admin123',
+  password: 'admin123', // Replace with your PostgreSQL password
   port: 5432,
 });
 
-// Retry logic for initial database connection
-const waitForDatabase = async (retries = 10, delay = 3000) => {
-  for (let i = 0; i < retries; i++) {
-    try {
-      await pool.query('SELECT 1');
-      console.log('Connected to PostgreSQL database');
-      return;
-    } catch (err) {
-      console.error(`PostgreSQL connection failed (attempt ${i + 1}/${retries}):`, err.message);
-      await new Promise(res => setTimeout(res, delay));
-    }
+// Connect to PostgreSQL
+pool.connect((err) => {
+  if (err) {
+    console.error('Error connecting to PostgreSQL:', err.stack);
+    return;
   }
-  console.error('Could not connect to PostgreSQL after several attempts. Exiting...');
-  process.exit(1);
-};
+  console.log('Connected to PostgreSQL database');
+});
 
 // Create notifications table if it doesn't exist
-const createTable = async () => {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS notifications (
-        id SERIAL PRIMARY KEY,
-        title VARCHAR(50) NOT NULL,
-        message TEXT NOT NULL,
-        icon VARCHAR(50) NOT NULL,
-        date VARCHAR(50) NOT NULL,
-        time VARCHAR(50) NOT NULL
-      )
-    `);
-    console.log('Notifications table is ready');
-  } catch (err) {
+pool.query(`
+  CREATE TABLE IF NOT EXISTS notifications (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(50) NOT NULL,
+    message TEXT NOT NULL,
+    icon VARCHAR(50) NOT NULL,
+    date VARCHAR(50) NOT NULL,
+    time VARCHAR(50) NOT NULL
+  )
+`, (err) => {
+  if (err) {
     console.error('Error creating notifications table:', err.stack);
+  } else {
+    console.log('Notifications table ready');
   }
-};
-
-// Health check route
-app.get('/', (req, res) => {
-  res.send('Notification backend is running');
 });
+
+// API Routes
 
 // Get all notifications
 app.get('/api/notifications', async (req, res) => {
@@ -71,11 +60,9 @@ app.get('/api/notifications', async (req, res) => {
 // Create a new notification
 app.post('/api/notifications', async (req, res) => {
   const { title, message, icon, date, time } = req.body;
-
   if (!title || !message || !icon || !date || !time) {
     return res.status(400).json({ error: 'All fields are required' });
   }
-
   try {
     const result = await pool.query(
       'INSERT INTO notifications (title, message, icon, date, time) VALUES ($1, $2, $3, $4, $5) RETURNING *',
@@ -88,12 +75,7 @@ app.post('/api/notifications', async (req, res) => {
   }
 });
 
-// Start server after DB is ready
-waitForDatabase().then(() => {
-  createTable().then(() => {
-    app.listen(port, () => {
-      console.log(`Server running at http://98.80.67.100:${port}`);
-    });
-  });
+// Start the server
+app.listen(port, () => {
+  console.log(`Server running at http://98.80.67.100:${port}`);
 });
-
