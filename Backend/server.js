@@ -2,7 +2,7 @@ const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
 const app = express();
-const port = 3300;
+const port = 3647;
 
 // Middleware
 app.use(cors());
@@ -92,7 +92,7 @@ app.post('/api/notifications', async (req, res) => {
 waitForDatabase().then(() => {
   createTable().then(() => {
     app.listen(port, () => {
-      console.log(`Server running at http://3.85.61.23:${port}`);
+      console.log(`Server running at http://44.223.23.145:${port}`);
     });
   });
 });
