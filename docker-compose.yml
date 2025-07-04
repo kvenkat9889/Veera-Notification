@@ -53,4 +53,8 @@ volumes:
 
 networks:
   veera_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.50.0.0/16
 
